@@ -1,0 +1,1036 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "PlatyPal Bicep Helper Modules catalog. Used by the dynamic Bicep builder to discover available modules, their parameters, outputs, template relevance, and dependency rules.",
+  "version": "2.0.0",
+  "lastUpdated": "2025-06-02",
+  "modules": [
+    {
+      "id": "apim",
+      "name": "API Management",
+      "filePath": "APIM.bicep",
+      "category": "Integration",
+      "description": "Deploys an Azure API Management instance with optional products and settings via AVM.",
+      "resourceType": "ApiManagement",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": true,
+      "dependsOn": ["key-vault"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region. Defaults to resource group location." },
+        { "name": "keyVaultName", "type": "string", "required": true, "description": "Name of the Key Vault for APIM secrets." },
+        { "name": "APIManagementService", "type": "object", "required": true, "description": "APIM configuration (name, tier, publisherEmail, publisherName)." },
+        { "name": "products", "type": "array", "required": false, "description": "Array of APIM products to create." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": [
+        {
+          "name": "tier",
+          "displayName": "APIM SKU Tier",
+          "type": "selection",
+          "description": "The pricing tier. Developer is recommended for non-production.",
+          "defaultValue": "Developer",
+          "options": ["Basic", "BasicV2", "Consumption", "Developer", "Premium", "Standard", "StandardV2"],
+          "bicepPath": "tier"
+        },
+        {
+          "name": "publisherEmail",
+          "displayName": "Publisher Email",
+          "type": "string",
+          "description": "Email address for the API Management publisher.",
+          "defaultValue": "support@temp.se",
+          "bicepPath": "publisherEmail"
+        },
+        {
+          "name": "publisherName",
+          "displayName": "Publisher Name",
+          "type": "string",
+          "description": "Name of the API Management publisher.",
+          "defaultValue": "temp",
+          "bicepPath": "publisherName"
+        }
+      ]
+    },
+    {
+      "id": "apim-settings",
+      "name": "API Management Settings",
+      "filePath": "APIM_Settings.bicep",
+      "category": "Integration",
+      "description": "Configures an existing APIM instance with product-level settings and policy fragments.",
+      "resourceType": "",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["apim"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "apimName", "type": "string", "required": true, "description": "Name of the existing APIM instance." },
+        { "name": "products", "type": "array", "required": false, "description": "Array of APIM products with subscriptions and settings." },
+        { "name": "policyFragments", "type": "array", "required": false, "description": "Array of reusable policy fragments to add to APIM." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    },
+    {
+      "id": "app-service-plan-logic",
+      "name": "App Service Plan (Logic Apps)",
+      "filePath": "appServicePlan.bicep",
+      "category": "Compute",
+      "description": "Deploys an App Service Plan (server farm) for hosting Logic Apps Standard. Uses Workflow Standard (WS) SKUs.",
+      "resourceType": "AppServicePlan",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": ["logic-app-standard"],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region. Defaults to resource group location." },
+        { "name": "appServicePlanSettings", "type": "object", "required": true, "description": "Plan config (name, skuName, skuCapacity, maximumScaleBurst, elasticScaleEnabled)." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "SKU Name",
+          "type": "selection",
+          "description": "The pricing tier for Logic Apps. WS (Workflow Standard) SKUs are recommended.",
+          "defaultValue": "WS1",
+          "options": ["WS1", "WS2", "WS3"],
+          "bicepPath": "skuName"
+        },
+        {
+          "name": "skuCapacity",
+          "displayName": "Instance Count",
+          "type": "int",
+          "description": "Number of instances (workers).",
+          "defaultValue": 1,
+          "minValue": 1,
+          "maxValue": 30,
+          "bicepPath": "skuCapacity"
+        },
+        {
+          "name": "elasticScaleEnabled",
+          "displayName": "Elastic Scale",
+          "type": "bool",
+          "description": "Enable elastic scale-out for the plan.",
+          "defaultValue": true,
+          "bicepPath": "elasticScaleEnabled"
+        },
+        {
+          "name": "maximumScaleBurst",
+          "displayName": "Max Scale Burst",
+          "type": "int",
+          "description": "Maximum number of workers when elastic scale is enabled.",
+          "defaultValue": 4,
+          "minValue": 1,
+          "maxValue": 30,
+          "bicepPath": "maximumScaleBurst"
+        }
+      ]
+    },
+    {
+      "id": "app-service-plan-function",
+      "name": "App Service Plan (Function Apps)",
+      "filePath": "appServicePlan.bicep",
+      "category": "Compute",
+      "description": "Deploys a separate App Service Plan (server farm) for hosting Function Apps. Uses Elastic Premium (EP) SKUs. Only needed when Function Apps should NOT share the Logic Apps plan.",
+      "resourceType": "AppServicePlanFunction",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": ["function-app"],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region. Defaults to resource group location." },
+        { "name": "appServicePlanSettings", "type": "object", "required": true, "description": "Plan config (name, skuName, skuCapacity, maximumScaleBurst, elasticScaleEnabled)." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "SKU Name",
+          "type": "selection",
+          "description": "The pricing tier for Function Apps.",
+          "defaultValue": "B1",
+          "options": ["EP1", "EP2", "EP3", "B1", "B2", "B3", "S1", "S2", "S3", "P1v3", "P2v3", "P3v3"],
+          "bicepPath": "skuName"
+        },
+        {
+          "name": "skuCapacity",
+          "displayName": "Instance Count",
+          "type": "int",
+          "description": "Number of instances (workers).",
+          "defaultValue": 1,
+          "minValue": 1,
+          "maxValue": 30,
+          "bicepPath": "skuCapacity"
+        },
+        {
+          "name": "elasticScaleEnabled",
+          "displayName": "Elastic Scale",
+          "type": "bool",
+          "description": "Enable elastic scale-out for the plan.",
+          "defaultValue": true,
+          "bicepPath": "elasticScaleEnabled"
+        },
+        {
+          "name": "maximumScaleBurst",
+          "displayName": "Max Scale Burst",
+          "type": "int",
+          "description": "Maximum number of workers when elastic scale is enabled.",
+          "defaultValue": 4,
+          "minValue": 1,
+          "maxValue": 30,
+          "bicepPath": "maximumScaleBurst"
+        }
+      ]
+    },
+    {
+      "id": "application-insights",
+      "name": "Application Insights",
+      "filePath": "ApplicationInsights.bicep",
+      "category": "Monitoring",
+      "description": "Deploys a standalone Application Insights component linked to a Log Analytics workspace.",
+      "resourceType": "ApplicationInsights",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["log-analytics-workspace"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "applicationInsightsSettings", "type": "object", "required": true, "description": "App Insights config (name, logAnalyticsWorkspaceResourceId)." }
+      ],
+      "outputs": ["name", "resourceId", "connectionString", "instrumentationKey"],
+      "configurableProperties": []
+    },
+    {
+      "id": "log-analytics-workspace",
+      "name": "Log Analytics Workspace",
+      "filePath": "LogAnalyticsWorkspace.bicep",
+      "category": "Monitoring",
+      "description": "Deploys a Log Analytics Workspace for centralized logging.",
+      "resourceType": "LogAnalyticsWorkspace",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": ["application-insights", "application-insights-settings"],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "logAnalyticsSettings", "type": "object", "required": true, "description": "Log Analytics config (name, retentionInDays, skuName)." }
+      ],
+      "outputs": ["name", "resourceId", "customerId"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "SKU",
+          "type": "selection",
+          "description": "Pricing tier for Log Analytics.",
+          "defaultValue": "PerGB2018",
+          "options": ["Free", "PerGB2018", "PerNode", "Premium", "Standalone", "Standard"],
+          "bicepPath": "skuName"
+        },
+        {
+          "name": "retentionInDays",
+          "displayName": "Retention (days)",
+          "type": "int",
+          "description": "Number of days to retain data.",
+          "defaultValue": 30,
+          "minValue": 7,
+          "maxValue": 730,
+          "bicepPath": "retentionInDays"
+        }
+      ]
+    },
+    {
+      "id": "application-insights-settings",
+      "name": "Application Insights + Diagnostics (Full)",
+      "filePath": "LoggingSettings/applicationInsightsSettings.bicep",
+      "category": "Monitoring",
+      "description": "Deploys Log Analytics, Application Insights, APIM logger, and diagnostic settings for full observability.",
+      "resourceType": "ApplicationInsights",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": true,
+      "dependsOn": ["apim", "service-bus-namespace", "storage-account"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 3,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "applicationInsightsSettings", "type": "object", "required": true, "description": "Application Insights config (applicationInsightsName, logAnalyticsName, apiManagementServiceName, serviceBusNamespaceName, servicesBusSku, storageAccountName)." }
+      ],
+      "outputs": ["applicationInsightsResourceId", "applicationInsightsInstrumentationKey"],
+      "configurableProperties": []
+    },
+    {
+      "id": "nodinite-settings",
+      "name": "Nodinite Logging",
+      "filePath": "LoggingSettings/NodiniteSettings.bicep",
+      "category": "Monitoring",
+      "description": "Deploys full Nodinite logging infrastructure: Event Hub, storage, managed identity, RBAC, and APIM policy fragments.",
+      "resourceType": "NodiniteStorageAccount",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["apim"],
+      "autoSelects": ["event-hub-namespace"],
+      "requiredWhen": [],
+      "sortOrder": 4,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "NodiniteLoggingSettings", "type": "object", "required": true, "description": "Nodinite logging config (storage, event hub, blob containers)." },
+        { "name": "APIMSettings", "type": "object", "required": true, "description": "APIM settings for policy fragment injection." },
+        { "name": "environmentSuffix", "type": "string", "required": true, "description": "Environment identifier (dev/test/prod)." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    },
+    {
+      "id": "container-app-environment",
+      "name": "Container App Environment",
+      "filePath": "ContainerAppEnvironment.bicep",
+      "category": "Compute",
+      "description": "Deploys a managed Container App Environment with optional VNet and Log Analytics.",
+      "resourceType": "ContainerAppEnvironment",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": ["container-app"],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "containerAppEnvironmentSettings", "type": "object", "required": true, "description": "Environment config (name, logAnalyticsWorkspaceResourceId, internal, infrastructureSubnetId)." }
+      ],
+      "outputs": ["name", "resourceId", "defaultDomain"],
+      "configurableProperties": [
+        {
+          "name": "internal",
+          "displayName": "Internal Only",
+          "type": "bool",
+          "description": "When true, the environment has no public ingress.",
+          "defaultValue": false,
+          "bicepPath": "internal"
+        },
+        {
+          "name": "zoneRedundant",
+          "displayName": "Zone Redundancy",
+          "type": "bool",
+          "description": "Enable zone redundancy for high availability.",
+          "defaultValue": false,
+          "bicepPath": "zoneRedundant"
+        }
+      ]
+    },
+    {
+      "id": "service-bus-namespace",
+      "name": "Service Bus Namespace",
+      "filePath": "ServiceBusNamespace.bicep",
+      "category": "Messaging",
+      "description": "Deploys a Service Bus Namespace with optional queues and topics via AVM.",
+      "resourceType": "ServiceBusNamespace",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "serviceBusSettings", "type": "object", "required": true, "description": "Service Bus config (name, sku, queues, topics)." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": [
+        {
+          "name": "sku",
+          "displayName": "SKU",
+          "type": "selection",
+          "description": "Pricing tier for the Service Bus Namespace.",
+          "defaultValue": "Standard",
+          "options": ["Basic", "Standard", "Premium"],
+          "bicepPath": "sku"
+        }
+      ]
+    },
+    {
+      "id": "event-hub-namespace",
+      "name": "Event Hub Namespace",
+      "filePath": "EventHubNamespace.bicep",
+      "category": "Messaging",
+      "description": "Deploys an Event Hub Namespace via AVM.",
+      "resourceType": "EventHubNamespace",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "eventHubNamespaceName", "type": "string", "required": true, "description": "Globally unique name of the Event Hub Namespace." },
+        { "name": "skuName", "type": "string", "required": false, "description": "SKU tier (Basic, Standard, Premium). Defaults to Standard." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "SKU",
+          "type": "selection",
+          "description": "Pricing tier for the Event Hub Namespace.",
+          "defaultValue": "Standard",
+          "options": ["Basic", "Standard", "Premium"],
+          "bicepPath": "skuName"
+        }
+      ]
+    },
+    {
+      "id": "data-factory",
+      "name": "Data Factory",
+      "filePath": "DataFactory.bicep",
+      "category": "Integration",
+      "description": "Deploys an Azure Data Factory instance via AVM.",
+      "resourceType": "DataFactory",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 3,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "dataFactoryName", "type": "string", "required": true, "description": "Name of the Data Factory instance." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "key-vault",
+      "name": "Key Vault",
+      "filePath": "KeyVault.bicep",
+      "category": "Security",
+      "description": "Deploys a Key Vault with RBAC authorization and optional secret seeding.",
+      "resourceType": "KeyVault",
+      "relevantFor": ["shared"],
+      "requiredIn": { "shared": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "keyVaultSettings", "type": "object", "required": true, "description": "Key Vault config (name, skuFamily, enableSoftDelete, enablePurgeProtection, secrets)." }
+      ],
+      "outputs": ["name", "resourceId", "uri"],
+      "configurableProperties": [
+        {
+          "name": "skuFamily",
+          "displayName": "SKU",
+          "type": "selection",
+          "description": "Key Vault pricing tier.",
+          "defaultValue": "standard",
+          "options": ["standard", "premium"],
+          "bicepPath": "skuFamily"
+        },
+        {
+          "name": "enablePurgeProtection",
+          "displayName": "Purge Protection",
+          "type": "bool",
+          "description": "Enable purge protection (recommended for production).",
+          "defaultValue": true,
+          "bicepPath": "enablePurgeProtection"
+        }
+      ]
+    },
+    {
+      "id": "storage-account",
+      "name": "Storage Account",
+      "filePath": "StorageAccount.bicep",
+      "category": "Storage",
+      "description": "Deploys a Storage Account with optional blob containers.",
+      "resourceType": "StorageAccount",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": { "shared": true, "integration": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "storageAccountParams", "type": "object", "required": true, "description": "Storage config (name, skuName, accessTier, isHnsEnabled, isSftpEnabled, allowBlobPublicAccess, allowSharedKeyAccess, networkDefaultAction, blobContainers)." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "Redundancy (SKU)",
+          "type": "selection",
+          "description": "Storage account replication strategy.",
+          "defaultValue": "Standard_LRS",
+          "options": ["Standard_LRS", "Standard_GRS", "Standard_RAGRS", "Standard_ZRS", "Premium_LRS"],
+          "bicepPath": "skuName"
+        },
+        {
+          "name": "accessTier",
+          "displayName": "Access Tier",
+          "type": "selection",
+          "description": "Blob storage access tier.",
+          "defaultValue": "Hot",
+          "options": ["Hot", "Cool"],
+          "bicepPath": "accessTier"
+        },
+        {
+          "name": "isHnsEnabled",
+          "displayName": "Data Lake Storage Gen2 (HNS)",
+          "type": "bool",
+          "description": "Enable hierarchical namespace for Azure Data Lake Storage Gen2.",
+          "defaultValue": true,
+          "bicepPath": "isHnsEnabled"
+        },
+        {
+          "name": "isSftpEnabled",
+          "displayName": "SFTP Access",
+          "type": "bool",
+          "description": "Enable SSH File Transfer Protocol access. Requires Data Lake Gen2.",
+          "defaultValue": false,
+          "bicepPath": "isSftpEnabled"
+        },
+        {
+          "name": "allowBlobPublicAccess",
+          "displayName": "Allow Blob Public Access",
+          "type": "bool",
+          "description": "Allow anonymous public read access to blob data.",
+          "defaultValue": false,
+          "bicepPath": "allowBlobPublicAccess"
+        },
+        {
+          "name": "allowSharedKeyAccess",
+          "displayName": "Allow Shared Key Access",
+          "type": "bool",
+          "description": "Allow access via storage account keys. Disable to enforce Entra ID authentication only.",
+          "defaultValue": true,
+          "bicepPath": "allowSharedKeyAccess"
+        },
+        {
+          "name": "networkDefaultAction",
+          "displayName": "Network Default Action",
+          "type": "selection",
+          "description": "Default network access rule. Set to 'Deny' for production to restrict access to allowed networks only.",
+          "defaultValue": "Allow",
+          "options": ["Allow", "Deny"],
+          "bicepPath": "networkDefaultAction"
+        }
+      ]
+    },
+    {
+      "id": "nodinite-storage-account",
+      "name": "Nodinite Storage Account",
+      "filePath": "NodiniteStorageAccount.bicep",
+      "category": "Storage",
+      "description": "Deploys a Storage Account with blob containers specifically for Nodinite logging.",
+      "resourceType": "StorageAccount",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": ["nodinite-settings"],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "storageAccountName", "type": "string", "required": true, "description": "Name of the Nodinite storage account." },
+        { "name": "blobContainers", "type": "array", "required": false, "description": "Array of blob containers to create." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "logic-app-standard",
+      "name": "Logic App Standard",
+      "filePath": "LogicAppStandard.bicep",
+      "category": "Compute",
+      "description": "Deploys a Logic App (Standard) with conditional Nodinite and/or App Insights logging.",
+      "resourceType": "LogicApp",
+      "relevantFor": ["integration"],
+      "requiredIn": {},
+      "selectedByDefault": true,
+      "dependsOn": ["storage-account"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "logicAppName", "type": "string", "required": true, "description": "Name of the Logic App." },
+        { "name": "sharedResources", "type": "object", "required": true, "description": "Shared infrastructure references (appServicePlanId, keyVaultName, etc.)." },
+        { "name": "storageAccountName", "type": "string", "required": true, "description": "Name of the Logic App storage account." },
+        { "name": "NodiniteLoggingEnabled", "type": "string", "required": true, "description": "Whether Nodinite logging is enabled (true/false)." },
+        { "name": "ApplicationInsightsLoggingEnabled", "type": "string", "required": true, "description": "Whether App Insights logging is enabled (true/false)." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": [
+        {
+          "name": "hostingModel",
+          "displayName": "Hosting Environment",
+          "type": "selection",
+          "description": "Choose where to host the Logic App. 'Azure' uses Azure App Service. 'Azure Arc' deploys to an Arc-enabled Kubernetes cluster for on-premises or multi-cloud hosting.",
+          "defaultValue": "Azure",
+          "options": ["Azure", "Azure Arc (Kubernetes)"],
+          "bicepPath": "hostingModel"
+        },
+        {
+          "name": "customLocationResourceId",
+          "displayName": "Custom Location Resource ID",
+          "type": "string",
+          "description": "Format: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ExtendedLocation/customLocations/{name}. Leave empty to fill in the generated Bicep later.",
+          "defaultValue": "",
+          "infoMessage": "Azure Arc hosting requires: (1) An Arc-enabled Kubernetes cluster, (2) The App Service extension installed on the cluster, (3) A Custom Location created on the cluster, (4) A Kubernetes App Service environment. If these are not set up yet, leave the resource IDs empty and update the generated Bicep files later.",
+          "visibleWhen": { "property": "hostingModel", "equals": "Azure Arc (Kubernetes)" },
+          "bicepPath": "customLocationResourceId"
+        },
+        {
+          "name": "arcAppServicePlanResourceId",
+          "displayName": "Arc App Service Plan Resource ID",
+          "type": "string",
+          "description": "The resource ID of the App Service Plan running on your Arc-enabled Kubernetes cluster. This replaces the Azure-hosted App Service Plan. Leave empty to fill in the generated Bicep later.",
+          "defaultValue": "",
+          "visibleWhen": { "property": "hostingModel", "equals": "Azure Arc (Kubernetes)" },
+          "bicepPath": "arcAppServicePlanResourceId"
+        }
+      ]
+    },
+    {
+      "id": "function-app",
+      "name": "Function App",
+      "filePath": "FunctionApp.bicep",
+      "category": "Compute",
+      "description": "Deploys a Function App with conditional Nodinite and/or Application Insights logging.",
+      "resourceType": "FunctionApp",
+      "relevantFor": ["integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["storage-account"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "functionAppName", "type": "string", "required": true, "description": "Name of the Function App." },
+        { "name": "sharedResources", "type": "object", "required": true, "description": "Shared infrastructure references (appServicePlanId, keyVaultName, etc.)." },
+        { "name": "NodiniteLoggingEnabled", "type": "string", "required": true, "description": "Whether Nodinite logging is enabled (true/false)." },
+        { "name": "ApplicationInsightsLoggingEnabled", "type": "string", "required": true, "description": "Whether App Insights logging is enabled (true/false)." }
+      ],
+      "outputs": ["name", "resourceId", "principalId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "container-app",
+      "name": "Container App",
+      "filePath": "ContainerApp.bicep",
+      "category": "Compute",
+      "description": "Deploys an Azure Container App with configurable containers, scaling, and ingress.",
+      "resourceType": "ContainerApp",
+      "relevantFor": ["integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 3,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "containerAppSettings", "type": "object", "required": true, "description": "Container App config (name, environmentResourceId, containers, ingress, scaleRules)." }
+      ],
+      "outputs": ["name", "resourceId", "fqdn"],
+      "configurableProperties": []
+    },
+    {
+      "id": "cosmos-db",
+      "name": "Cosmos DB",
+      "filePath": "CosmosDB.bicep",
+      "category": "Database",
+      "description": "Deploys a Cosmos DB account with optional SQL databases and containers.",
+      "resourceType": "CosmosDb",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "cosmosDbSettings", "type": "object", "required": true, "description": "Cosmos DB config (name, defaultConsistencyLevel, capacityMode, sqlDatabases)." }
+      ],
+      "outputs": ["name", "resourceId", "endpoint"],
+      "configurableProperties": [
+        {
+          "name": "defaultConsistencyLevel",
+          "displayName": "Consistency Level",
+          "type": "selection",
+          "description": "Default consistency level for the Cosmos DB account.",
+          "defaultValue": "Session",
+          "options": ["Eventual", "ConsistentPrefix", "Session", "BoundedStaleness", "Strong"],
+          "bicepPath": "defaultConsistencyLevel"
+        },
+        {
+          "name": "capacityMode",
+          "displayName": "Capacity Mode",
+          "type": "selection",
+          "description": "Serverless is cost-effective for low-traffic workloads.",
+          "defaultValue": "Serverless",
+          "options": ["Provisioned", "Serverless"],
+          "bicepPath": "capacityMode"
+        }
+      ]
+    },
+    {
+      "id": "sql-server",
+      "name": "SQL Server",
+      "filePath": "SqlServer.bicep",
+      "category": "Database",
+      "description": "Deploys an Azure SQL logical server with optional databases and Entra admin.",
+      "resourceType": "SqlServer",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "sqlServerSettings", "type": "object", "required": true, "description": "SQL config (name, administratorLogin, entraAdministrator, firewallRules, databases)." }
+      ],
+      "outputs": ["name", "resourceId", "fullyQualifiedDomainName"],
+      "configurableProperties": []
+    },
+    {
+      "id": "redis-cache",
+      "name": "Redis Cache",
+      "filePath": "RedisCache.bicep",
+      "category": "Database",
+      "description": "Deploys an Azure Cache for Redis with configurable SKU and TLS settings.",
+      "resourceType": "RedisCache",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 3,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "redisCacheSettings", "type": "object", "required": true, "description": "Redis config (name, skuName, capacity, enableNonSslPort, minimumTlsVersion)." }
+      ],
+      "outputs": ["name", "resourceId", "hostName", "sslPort"],
+      "configurableProperties": [
+        {
+          "name": "skuName",
+          "displayName": "SKU",
+          "type": "selection",
+          "description": "Redis Cache pricing tier.",
+          "defaultValue": "Basic",
+          "options": ["Basic", "Standard", "Premium"],
+          "bicepPath": "skuName"
+        }
+      ]
+    },
+    {
+      "id": "managed-identity",
+      "name": "User-Assigned Managed Identity",
+      "filePath": "ManagedIdentity.bicep",
+      "category": "Security",
+      "description": "Deploys a user-assigned managed identity for RBAC-based resource access.",
+      "resourceType": "ManagedIdentity",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "name", "type": "string", "required": true, "description": "Name of the managed identity." },
+        { "name": "tags", "type": "object", "required": false, "description": "Tags to apply." }
+      ],
+      "outputs": ["name", "resourceId", "principalId", "clientId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "virtual-network",
+      "name": "Virtual Network",
+      "filePath": "VirtualNetwork.bicep",
+      "category": "Networking",
+      "description": "Deploys a VNet with configurable subnets, NSGs, and service endpoints.",
+      "resourceType": "VirtualNetwork",
+      "relevantFor": ["network"],
+      "requiredIn": { "network": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": ["network-security-group"],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "virtualNetworkSettings", "type": "object", "required": true, "description": "VNet config (name, addressPrefixes, subnets with delegations and service endpoints)." }
+      ],
+      "outputs": ["name", "resourceId", "subnetResourceIds"],
+      "configurableProperties": [
+        {
+          "name": "vnetAddressPrefix",
+          "displayName": "VNet Address Space",
+          "type": "string",
+          "description": "Address space CIDR for the virtual network.",
+          "defaultValue": "10.0.0.0/16",
+          "bicepPath": "addressPrefixes"
+        }
+      ]
+    },
+    {
+      "id": "network-security-group",
+      "name": "Network Security Group",
+      "filePath": "NetworkSecurityGroup.bicep",
+      "category": "Networking",
+      "description": "Deploys an NSG with configurable inbound/outbound security rules.",
+      "resourceType": "NetworkSecurityGroup",
+      "relevantFor": ["network"],
+      "requiredIn": { "network": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "nsgSettings", "type": "object", "required": true, "description": "NSG config (name, securityRules with priority, access, direction, protocol, addresses)." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "private-endpoint",
+      "name": "Private Endpoint",
+      "filePath": "PrivateEndpoint.bicep",
+      "category": "Networking",
+      "description": "Deploys a Private Endpoint for secure PaaS connectivity over VNet.",
+      "resourceType": "PrivateEndpoint",
+      "relevantFor": ["integration", "network"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 3,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "location", "type": "string", "required": false, "description": "Azure region." },
+        { "name": "privateEndpointSettings", "type": "object", "required": true, "description": "PE config (name, subnetResourceId, serviceResourceId, groupId, privateDnsZoneGroup)." }
+      ],
+      "outputs": ["name", "resourceId"],
+      "configurableProperties": []
+    },
+    {
+      "id": "rbac",
+      "name": "RBAC Role Assignments",
+      "filePath": "AccessControlWithRBAC/RBAC.bicep",
+      "category": "Security",
+      "description": "Assigns RBAC roles on Storage Accounts, Service Bus, APIM, Key Vault, Cosmos DB, and more.",
+      "resourceType": "",
+      "relevantFor": ["shared", "integration"],
+      "requiredIn": { "shared": true, "integration": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 10,
+      "parameters": [
+        { "name": "RBACSettings", "type": "object", "required": true, "description": "RBAC settings with per-resource role assignments." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    },
+    {
+      "id": "nodinite-rbac",
+      "name": "Nodinite RBAC Assignments",
+      "filePath": "AccessControlWithRBAC/Nodinite_RBAC.bicep",
+      "category": "Security",
+      "description": "Assigns RBAC roles specifically for Nodinite logging components.",
+      "resourceType": "",
+      "relevantFor": ["shared"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["nodinite-settings"],
+      "autoSelects": [],
+      "requiredWhen": ["nodinite-settings"],
+      "sortOrder": 11,
+      "parameters": [
+        { "name": "NodiniteRBACSettings", "type": "object", "required": true, "description": "RBAC settings for Nodinite resources." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    },
+    {
+      "id": "api-module",
+      "name": "API (APIM)",
+      "filePath": "API_Modules/API.bicep",
+      "category": "Integration",
+      "description": "Deploys a complete APIM API with version set, product link, backends, named values, and operations.",
+      "resourceType": "",
+      "relevantFor": ["api"],
+      "requiredIn": { "api": true },
+      "selectedByDefault": true,
+      "dependsOn": [],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 1,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "environmentSuffix", "type": "string", "required": true, "description": "Environment identifier (dev/test/prod)." },
+        { "name": "api", "type": "object", "required": true, "description": "Full API definition (name, displayName, operations, namedValues, etc.)." },
+        { "name": "apiManagement", "type": "object", "required": true, "description": "Reference to existing APIM instance (name, resourceGroupName)." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    },
+    {
+      "id": "api-operations",
+      "name": "API Operations",
+      "filePath": "API_Modules/API_Operations.bicep",
+      "category": "Integration",
+      "description": "Deploys individual API operations on an existing APIM API.",
+      "resourceType": "",
+      "relevantFor": ["api"],
+      "requiredIn": {},
+      "selectedByDefault": false,
+      "dependsOn": ["api-module"],
+      "autoSelects": [],
+      "requiredWhen": [],
+      "sortOrder": 2,
+      "parameters": [
+        { "name": "dateTime", "type": "string", "required": false, "description": "UTC timestamp for unique deployment names." },
+        { "name": "operation", "type": "object", "required": true, "description": "Operation definition (name, displayName, method, urlTemplate, policies)." },
+        { "name": "apiManagement", "type": "object", "required": true, "description": "Reference to existing APIM instance and API." }
+      ],
+      "outputs": [],
+      "configurableProperties": []
+    }
+  ],
+  "subModules": [
+    {
+      "id": "logic-app-app-settings",
+      "name": "Logic App - App Settings",
+      "filePath": "LogicApp_Modules/logicAppSettings.bicep",
+      "parentModule": "logic-app-standard",
+      "description": "Applies app settings to an existing Logic App."
+    },
+    {
+      "id": "logic-app-connection-access-policies",
+      "name": "Logic App - Connection Access Policies",
+      "filePath": "LogicApp_Modules/connectionAccessPolicies.bicep",
+      "parentModule": "logic-app-standard",
+      "description": "Configures API connection access policies for a Logic App."
+    },
+    {
+      "id": "logic-app-api-connections",
+      "name": "Logic App - API Connections",
+      "filePath": "LogicApp_Modules/apiConnections.bicep",
+      "parentModule": "logic-app-standard",
+      "description": "Deploys API connections for a Logic App."
+    },
+    {
+      "id": "function-app-app-settings",
+      "name": "Function App - App Settings",
+      "filePath": "FunctionApp_Modules/functionAppSettings.bicep",
+      "parentModule": "function-app",
+      "description": "Applies app settings to an existing Function App."
+    },
+    {
+      "id": "function-app-key-vault-references",
+      "name": "Function App - Key Vault References",
+      "filePath": "FunctionApp_Modules/functionAppKeyVaultReferences.bicep",
+      "parentModule": "function-app",
+      "description": "Configures Key Vault references for Function App settings."
+    },
+    {
+      "id": "df-linked-service-blob",
+      "name": "Data Factory - Blob Storage Linked Service",
+      "filePath": "DataFactoryResources/LinkedService_BlobStorage.bicep",
+      "parentModule": "data-factory",
+      "description": "Creates an Azure Blob Storage linked service in Data Factory."
+    },
+    {
+      "id": "df-linked-service-http",
+      "name": "Data Factory - HTTP Linked Service",
+      "filePath": "DataFactoryResources/LinkedService_Http.bicep",
+      "parentModule": "data-factory",
+      "description": "Creates an HTTP linked service in Data Factory."
+    },
+    {
+      "id": "df-linked-service-keyvault",
+      "name": "Data Factory - Key Vault Linked Service",
+      "filePath": "DataFactoryResources/LinkedService_KeyVault.bicep",
+      "parentModule": "data-factory",
+      "description": "Creates a Key Vault linked service in Data Factory."
+    },
+    {
+      "id": "df-custom-connector",
+      "name": "Data Factory - Custom Connector",
+      "filePath": "DataFactoryResources/CustomConnector.bicep",
+      "parentModule": "data-factory",
+      "description": "Creates a custom connector in Data Factory."
+    }
+  ],
+  "categories": [
+    { "id": "Compute", "description": "App Service Plans, Function Apps, Logic Apps, Container Apps", "sortOrder": 1 },
+    { "id": "Database", "description": "SQL Server, Cosmos DB, Redis Cache", "sortOrder": 2 },
+    { "id": "Integration", "description": "API Management, Data Factory", "sortOrder": 3 },
+    { "id": "Messaging", "description": "Event Hub Namespaces, Service Bus Namespaces", "sortOrder": 4 },
+    { "id": "Monitoring", "description": "Application Insights, Log Analytics, Nodinite", "sortOrder": 5 },
+    { "id": "Networking", "description": "Virtual Networks, NSGs, Private Endpoints", "sortOrder": 6 },
+    { "id": "Security", "description": "Key Vault, Managed Identity, RBAC", "sortOrder": 7 },
+    { "id": "Storage", "description": "Storage Accounts, Blob Containers", "sortOrder": 8 }
+  ]
+}

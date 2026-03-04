@@ -1,0 +1,56 @@
+name: 'Azure Login and Environment Setup'
+description: 'Logs in to Azure using OIDC (federated credentials) and sets up environment variables.'
+outputs:
+  RG_NAME:
+    description: 'Resource group name'
+    value: ${{ steps.set_rg.outputs.RG_NAME }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Azure Login (OIDC)
+      uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.client_id }}
+        tenant-id: ${{ inputs.tenant_id }}
+        subscription-id: ${{ inputs.subscription_id }}
+
+    - name: Set Azure environment variables
+      shell: bash
+      run: |
+        echo "APP_REGISTRATION_APPLICATION_ID=${{ inputs.client_id }}" >> $GITHUB_ENV
+        echo "AZURE_SUBSCRIPTION_ID=${{ inputs.subscription_id }}" >> $GITHUB_ENV
+
+    - name: Set environment suffix
+      shell: bash
+      run: echo "ENV_SUFFIX=${{ inputs.env_suffix }}" >> $GITHUB_ENV
+
+    - name: Set resource group name
+      id: set_rg
+      shell: bash
+      run: |
+        RG_NAME="${{ inputs.ORGANISATION_SUFFIX }}-int-${{ inputs.integration_id }}-rg-${{ inputs.REGION_SUFFIX }}-${{ inputs.env_suffix }}"
+        echo "RG_NAME=$RG_NAME" >> $GITHUB_ENV
+        echo "RG_NAME=$RG_NAME" >> $GITHUB_OUTPUT
+
+inputs:
+  client_id:
+    description: 'Azure App Registration client ID (AZURE_CLIENT_ID)'
+    required: true
+  tenant_id:
+    description: 'Azure tenant ID (AZURE_TENANT_ID)'
+    required: true
+  subscription_id:
+    description: 'Azure subscription ID (AZURE_SUBSCRIPTION_ID)'
+    required: true
+  env_suffix:
+    description: 'Environment suffix I.E. (dev, test, prod...)'
+    required: true
+  ORGANISATION_SUFFIX:
+    description: 'Organisation suffix'
+    required: true
+  REGION_SUFFIX:
+    description: 'Region suffix'
+    required: true
+  integration_id:
+    description: 'Integration ID'
+    required: true

@@ -1,0 +1,22 @@
+{
+  "experimentalFeaturesEnabled": {
+    "legacyFormatter": true
+  },
+  "moduleAliases": {
+    "br": {
+      "public": {
+        "registry": "mcr.microsoft.com",
+        "modulePath": "bicep"
+      }
+    }
+  },
+  "analyzers": {
+    "core": {
+      "rules": {
+        "no-deployments-resources": { "level": "off" },
+        "no-unused-params": { "level": "warning" },
+        "no-unused-vars": { "level": "warning" }
+      }
+    }
+  }
+}

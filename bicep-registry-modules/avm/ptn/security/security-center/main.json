@@ -1,0 +1,415 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "3328481461768509396"
+    },
+    "name": "Azure Security Center (Defender for Cloud)",
+    "description": "This module deploys an Azure Security Center (Defender for Cloud) Configuration."
+  },
+  "parameters": {
+    "deviceSecurityGroupProperties": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Optional. Device Security group data."
+      }
+    },
+    "ioTSecuritySolutionProperties": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Optional. Security Solution data."
+      }
+    },
+    "virtualMachinesPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for VMs. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "sqlServersPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for SqlServers. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "appServicesPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for AppServices. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "storageAccountsPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for StorageAccounts. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "storageAccountsMalwareScanningSettings": {
+      "type": "object",
+      "properties": {
+        "onUploadMalwareScanningEnabled": {
+          "type": "string",
+          "allowedValues": [
+            "False",
+            "True"
+          ],
+          "metadata": {
+            "description": "Required. Enable or disable on-upload malware scanning for storage accounts. - True or False."
+          }
+        },
+        "capGBPerMonthPerStorageAccount": {
+          "type": "int",
+          "nullable": true,
+          "metadata": {
+            "description": "Optional. If on-upload malware scanning is enabled, set a cap for the amount of GB per month per storage account that can be scanned. If not set, there will be no cap applied."
+          }
+        },
+        "sensitiveDataDiscoveryEnabled": {
+          "type": "string",
+          "allowedValues": [
+            "False",
+            "True"
+          ],
+          "metadata": {
+            "description": "Required. Enable or disable sensitive data discovery for storage accounts. - True or False."
+          }
+        }
+      },
+      "nullable": true,
+      "metadata": {
+        "description": "Optional. If the pricing tier value for StorageAccounts is Standard. Choose the settings for malware scanning."
+      }
+    },
+    "sqlServerVirtualMachinesPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for SqlServerVirtualMachines. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "kubernetesServicePricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for KubernetesService. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "containerRegistryPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for ContainerRegistry. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "keyVaultsPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for KeyVaults. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "dnsPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for DNS. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "armPricingTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for ARM. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "openSourceRelationalDatabasesTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for OpenSourceRelationalDatabases. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "containersTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for containers. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "cosmosDbsTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Optional. The pricing tier value for CosmosDbs. Azure Security Center is provided in two pricing tiers: free and standard, with the standard tier available with a trial period. The standard tier offers advanced security capabilities, while the free tier offers basic security features. - Free or Standard."
+      }
+    },
+    "securityContactProperties": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Optional. Security contact data."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[deployment().location]",
+      "metadata": {
+        "description": "Optional. Location deployment metadata."
+      }
+    },
+    "enableTelemetry": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional. Enable/Disable usage telemetry for module."
+      }
+    }
+  },
+  "variables": {
+    "pricings": [
+      {
+        "name": "VirtualMachines",
+        "pricingTier": "[parameters('virtualMachinesPricingTier')]"
+      },
+      {
+        "name": "SqlServers",
+        "pricingTier": "[parameters('sqlServersPricingTier')]"
+      },
+      {
+        "name": "AppServices",
+        "pricingTier": "[parameters('appServicesPricingTier')]"
+      },
+      {
+        "name": "StorageAccounts",
+        "pricingTier": "[parameters('storageAccountsPricingTier')]",
+        "storageAccountsMalwareScanningSettings": "[parameters('storageAccountsMalwareScanningSettings')]"
+      },
+      {
+        "name": "SqlServerVirtualMachines",
+        "pricingTier": "[parameters('sqlServerVirtualMachinesPricingTier')]"
+      },
+      {
+        "name": "KubernetesService",
+        "pricingTier": "[parameters('kubernetesServicePricingTier')]"
+      },
+      {
+        "name": "ContainerRegistry",
+        "pricingTier": "[parameters('containerRegistryPricingTier')]"
+      },
+      {
+        "name": "KeyVaults",
+        "pricingTier": "[parameters('keyVaultsPricingTier')]"
+      },
+      {
+        "name": "Dns",
+        "pricingTier": "[parameters('dnsPricingTier')]"
+      },
+      {
+        "name": "Arm",
+        "pricingTier": "[parameters('armPricingTier')]"
+      },
+      {
+        "name": "OpenSourceRelationalDatabases",
+        "pricingTier": "[parameters('openSourceRelationalDatabasesTier')]"
+      },
+      {
+        "name": "Containers",
+        "pricingTier": "[parameters('containersTier')]"
+      },
+      {
+        "name": "CosmosDbs",
+        "pricingTier": "[parameters('cosmosDbsTier')]"
+      }
+    ]
+  },
+  "resources": {
+    "avmTelemetry": {
+      "condition": "[parameters('enableTelemetry')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2024-03-01",
+      "name": "[take(format('46d3xbcp.ptn.security-securitycenter.{0}.{1}', replace('-..--..-', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4)), 64)]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [],
+          "outputs": {
+            "telemetry": {
+              "type": "String",
+              "value": "For more information, see https://aka.ms/avm/TelemetryInfo"
+            }
+          }
+        }
+      }
+    },
+    "pricingTiers": {
+      "copy": {
+        "name": "pricingTiers",
+        "count": "[length(variables('pricings'))]",
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "type": "Microsoft.Security/pricings",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('pricings')[copyIndex()].name]",
+      "properties": {
+        "pricingTier": "[variables('pricings')[copyIndex()].pricingTier]",
+        "subPlan": "[if(and(equals(variables('pricings')[copyIndex()].name, 'VirtualMachines'), equals(variables('pricings')[copyIndex()].pricingTier, 'Standard')), 'P2', if(and(equals(variables('pricings')[copyIndex()].name, 'StorageAccounts'), equals(variables('pricings')[copyIndex()].pricingTier, 'Standard')), 'DefenderForStorageV2', null()))]",
+        "extensions": "[if(and(and(equals(variables('pricings')[copyIndex()].name, 'StorageAccounts'), equals(variables('pricings')[copyIndex()].pricingTier, 'Standard')), not(empty(tryGet(variables('pricings')[copyIndex()], 'storageAccountsMalwareScanningSettings')))), createArray(createObject('name', 'OnUploadMalwareScanning', 'isEnabled', tryGet(parameters('storageAccountsMalwareScanningSettings'), 'onUploadMalwareScanningEnabled'), 'additionalExtensionProperties', if(not(equals(tryGet(parameters('storageAccountsMalwareScanningSettings'), 'capGBPerMonthPerStorageAccount'), null())), createObject('CapGBPerMonthPerStorageAccount', tryGet(parameters('storageAccountsMalwareScanningSettings'), 'capGBPerMonthPerStorageAccount')), null())), createObject('name', 'SensitiveDataDiscovery', 'isEnabled', tryGet(parameters('storageAccountsMalwareScanningSettings'), 'sensitiveDataDiscoveryEnabled'))), null())]"
+      }
+    },
+    "deviceSecurityGroups": {
+      "condition": "[not(empty(parameters('deviceSecurityGroupProperties')))]",
+      "type": "Microsoft.Security/deviceSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "deviceSecurityGroups",
+      "properties": {
+        "thresholdRules": "[parameters('deviceSecurityGroupProperties').thresholdRules]",
+        "timeWindowRules": "[parameters('deviceSecurityGroupProperties').timeWindowRules]",
+        "allowlistRules": "[parameters('deviceSecurityGroupProperties').allowlistRules]",
+        "denylistRules": "[parameters('deviceSecurityGroupProperties').denylistRules]"
+      }
+    },
+    "securityContacts": {
+      "condition": "[not(empty(parameters('securityContactProperties')))]",
+      "type": "Microsoft.Security/securityContacts",
+      "apiVersion": "2023-12-01-preview",
+      "name": "default",
+      "properties": {
+        "emails": "[parameters('securityContactProperties').emails]",
+        "isEnabled": "[coalesce(tryGet(parameters('securityContactProperties'), 'isEnabled'), true())]",
+        "notificationsByRole": "[parameters('securityContactProperties').notificationsByRole]",
+        "notificationsSources": "[parameters('securityContactProperties').notificationsSources]"
+      }
+    },
+    "iotSecuritySolutions": {
+      "condition": "[not(empty(parameters('ioTSecuritySolutionProperties')))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('{0}-ASC-IotSecuritySolutions', uniqueString(deployment().name))]",
+      "resourceGroup": "[if(empty(parameters('ioTSecuritySolutionProperties')), 'dummy', parameters('ioTSecuritySolutionProperties').resourceGroup)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "ioTSecuritySolutionProperties": {
+            "value": "[parameters('ioTSecuritySolutionProperties')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "17079556367070596295"
+            }
+          },
+          "parameters": {
+            "ioTSecuritySolutionProperties": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Optional. Security Solution data."
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[not(empty(parameters('ioTSecuritySolutionProperties')))]",
+              "type": "Microsoft.Security/iotSecuritySolutions",
+              "apiVersion": "2019-08-01",
+              "name": "iotSecuritySolutions",
+              "properties": {
+                "workspace": "[parameters('ioTSecuritySolutionProperties').workspace]",
+                "displayName": "[parameters('ioTSecuritySolutionProperties').displayName]",
+                "status": "[parameters('ioTSecuritySolutionProperties').status]",
+                "export": "[parameters('ioTSecuritySolutionProperties').export]",
+                "disabledDataSources": "[parameters('ioTSecuritySolutionProperties').disabledDataSources]",
+                "iotHubs": "[parameters('ioTSecuritySolutionProperties').iotHubs]",
+                "userDefinedResources": "[parameters('ioTSecuritySolutionProperties').userDefinedResources]",
+                "recommendationsConfiguration": "[parameters('ioTSecuritySolutionProperties').recommendationsConfiguration]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "outputs": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the security center."
+      },
+      "value": "Security"
+    }
+  }
+}

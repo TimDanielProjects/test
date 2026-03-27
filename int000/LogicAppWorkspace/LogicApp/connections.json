@@ -1,0 +1,69 @@
+{
+  "serviceProviderConnections": {
+    "AzureBlob": {
+      "displayName": "blobStorageConnection",
+      "parameterSetName": "ManagedServiceIdentity",
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "blobStorageEndpoint": "@appsetting(\u0027storageAccount_blobStorageEndpoint\u0027)"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/AzureBlob"
+      }
+    },
+    "AzureFile": {
+      "displayName": "fileshareConnection",
+      "parameterSetName": "ManagedServiceIdentity",
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "storageAccountUri": "@appsetting(\u0027storageAccount_fileshareEndpoint\u0027)"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/AzureFile"
+      }
+    },
+    "azureQueues": {
+      "displayName": "queueConnection",
+      "parameterSetName": "ManagedServiceIdentity",
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "queueStorageEndpoint": "@appsetting(\u0027storageAccount_queueStorageEndpoint\u0027)"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/azureQueues"
+      }
+    },
+    "azureTables": {
+      "displayName": "tableConnection",
+      "parameterSetName": "ManagedServiceIdentity",
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "tableStorageEndpoint": "@appsetting(\u0027storageAccount_tableStorageEndpoint\u0027)"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/azureTables"
+      }
+    },
+    "eventHubs": {
+      "displayName": "eventHubsConnection",
+      "parameterSetName": "ManagedServiceIdentity",
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "fullyQualifiedNamespace": "@appsetting(\u0027eventHubs_fullyQualifiedNamespace\u0027)"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/eventHubs"
+      }
+    }
+  }
+}

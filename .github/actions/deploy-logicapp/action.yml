@@ -1,0 +1,136 @@
+name: 'Deploy Logic App Standard Workflows'
+description: 'Checks for Logic App Standard existence and deploys workflows if present.'
+inputs:
+  logicapp_definition:
+    description: 'Path to the Logic App Standard workspace folder containing workflows, connections.json, host.json, etc.'
+    required: true
+  RG_NAME:
+    description: 'Resource group name'
+    required: true
+  LOGIC_APP_STANDARD_NAME:
+    description: 'Logic App Standard name'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Check if Logic App Standard exists
+      id: check_logic_app
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.LOGIC_APP_STANDARD_NAME }}" ]; then
+          az functionapp show --resource-group ${{ inputs.RG_NAME }} --name ${{ inputs.LOGIC_APP_STANDARD_NAME }} > /dev/null 2>&1 && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Disable and Drain Logic App Workflows
+      if: steps.check_logic_app.outputs.exists == 'true'
+      shell: bash
+      run: |
+        RG="${{ inputs.RG_NAME }}"
+        LA_NAME="${{ inputs.LOGIC_APP_STANDARD_NAME }}"
+        SUB_ID=$(az account show --query id -o tsv)
+
+        echo "Fetching workflows to disable..."
+        WORKFLOWS=$(az rest --method get \
+          --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows?api-version=2022-03-01" \
+          --query "value[].name" -o tsv)
+
+        if [ -z "$WORKFLOWS" ]; then
+          echo "No workflows found. Nothing to disable."
+          exit 0
+        fi
+
+        for WF in $WORKFLOWS; do
+          echo "Disabling workflow: $WF"
+          az rest --method post \
+            --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows/$WF/disable?api-version=2022-03-01" \
+            || true
+        done
+
+        echo "Waiting for in-flight instances to complete (Drain)..."
+        MAX_RETRIES=20
+        WAIT_SECONDS=30
+        for ((i=1; i<=MAX_RETRIES; i++)); do
+          RUNNING_TOTAL=0
+          for WF in $WORKFLOWS; do
+            COUNT=$(az rest --method get \
+              --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows/$WF/runs?api-version=2022-03-01&\$filter=status%20eq%20'Running'" \
+              --query "value | length(@)" -o tsv)
+            RUNNING_TOTAL=$((RUNNING_TOTAL + COUNT))
+          done
+          if [ "$RUNNING_TOTAL" -eq 0 ]; then
+            echo "All workflows drained."
+            exit 0
+          fi
+          echo "Attempt $i/$MAX_RETRIES: $RUNNING_TOTAL instance(s) still running. Waiting ${WAIT_SECONDS}s..."
+          sleep $WAIT_SECONDS
+        done
+
+        echo "::error::Drain timed out after $((MAX_RETRIES * WAIT_SECONDS))s — $RUNNING_TOTAL instance(s) still running. Aborting deployment."
+        exit 1
+
+    - name: Deploy Logic App Standard Workspace
+      if: steps.check_logic_app.outputs.exists == 'true'
+      shell: bash
+      run: |
+        # Create a zip file from the workspace
+        cd ${{ inputs.logicapp_definition }}
+        zip -r ../logicapp-workspace.zip . -x "*.git*" "node_modules/*" ".vscode/*"
+        cd ..
+        
+        # Deploy the workspace using ZIP deployment
+        az functionapp deployment source config-zip \
+          --resource-group ${{ inputs.RG_NAME }} \
+          --name ${{ inputs.LOGIC_APP_STANDARD_NAME }} \
+          --src logicapp-workspace.zip
+
+    - name: Cleanup Orphaned Workflows
+      if: steps.check_logic_app.outputs.exists == 'true'
+      shell: bash
+      run: |
+        RG="${{ inputs.RG_NAME }}"
+        LA_NAME="${{ inputs.LOGIC_APP_STANDARD_NAME }}"
+        SUB_ID=$(az account show --query id -o tsv)
+
+        # Find local workflow names from the workspace folder
+        LOCAL_WORKFLOWS=$(find "${{ inputs.logicapp_definition }}" -maxdepth 2 -name "workflow.json" | xargs -I{} dirname {} | xargs -I{} basename {})
+        echo "Local workflows: $LOCAL_WORKFLOWS"
+
+        REMOTE_WORKFLOWS=$(az rest --method get \
+          --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows?api-version=2022-03-01" \
+          --query "value[].name" -o tsv)
+
+        for R_WF in $REMOTE_WORKFLOWS; do
+          if [[ ! " $LOCAL_WORKFLOWS " =~ " $R_WF " ]]; then
+            echo "Workflow '$R_WF' not found in workspace. Deleting..."
+            az rest --method delete \
+              --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows/$R_WF?api-version=2022-03-01"
+          else
+            echo "Workflow '$R_WF' is present in workspace. Keeping."
+          fi
+        done
+
+    - name: Re-enable All Workflows
+      if: steps.check_logic_app.outputs.exists == 'true'
+      shell: bash
+      run: |
+        RG="${{ inputs.RG_NAME }}"
+        LA_NAME="${{ inputs.LOGIC_APP_STANDARD_NAME }}"
+        SUB_ID=$(az account show --query id -o tsv)
+
+        WORKFLOWS=$(az rest --method get \
+          --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows?api-version=2022-03-01" \
+          --query "value[].name" -o tsv)
+
+        if [ -z "$WORKFLOWS" ]; then
+          echo "No workflows found. Nothing to enable."
+          exit 0
+        fi
+
+        for WF in $WORKFLOWS; do
+          echo "Enabling workflow: $WF"
+          az rest --method post \
+            --url "https://management.azure.com/subscriptions/$SUB_ID/resourceGroups/$RG/providers/Microsoft.Web/sites/$LA_NAME/workflows/$WF/enable?api-version=2022-03-01" \
+            || true
+        done

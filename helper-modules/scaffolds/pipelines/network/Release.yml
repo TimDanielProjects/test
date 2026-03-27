@@ -1,0 +1,44 @@
+parameters:
+  # Base parameters
+  - name: environment # Name of the environment. Needs to match the name in DevOps under Pipelines -> Environments
+    type: string
+  - name: resourceId
+    type: string
+  - name: stageDependsOn # If the release stage depends on an earlier stage.
+    type: string
+    default: ''
+  # End Base parameters
+
+stages:
+  - stage: ${{ parameters.environment }}
+    dependsOn: ${{ parameters.stageDependsOn }}
+    displayName: Release to ${{ parameters.environment }}
+    jobs:
+      - deployment: Deploy
+        environment: ${{ parameters.environment }}
+        variables:
+          - template: /EnvironmentVariables/${{ parameters.environment }}.yml@deployment-modules # The shared global environment variables
+          # Builds the resource group name, which is used for the resources naming in Bicep too.
+          - name: resourceGroupName
+            value: '${{ lower(variables.organisationSuffix) }}-int-${{ parameters.resourceId }}-rg-${{ variables.regionSuffix }}-${{ variables.environmentSuffix }}'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: /Release/DownloadArtifactAndCheckoutRepos.yml@deployment-modules
+
+                # Deploy the resources
+                - template: /Release/BicepTemplate.yml@deployment-modules
+                  parameters:
+                    bicepTemplateFile: Main.bicep
+                    resourceType: Main Bicep
+                    overrideParameters: >-
+                      -organisationSuffix "${{ lower(variables.organisationSuffix) }}"
+                      -regionSuffix "${{ variables.regionSuffix }}"
+                      -environmentSuffix "${{ variables.environmentSuffix }}"
+                      -integrationId "${{ parameters.resourceId }}"
+
+                    parseOutputs: true
+                    resourceGroupName: $(resourceGroupName)
+                    resourceLocation: ${{ variables.defaultResourceLocation }}
+                    serviceConnection: ${{ variables.serviceConnection }}

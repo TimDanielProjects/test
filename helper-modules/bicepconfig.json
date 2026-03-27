@@ -1,0 +1,35 @@
+// Bicep configuration for the helper-modules repository.
+// Module aliases allow modules to be referenced by short names instead of full registry paths.
+// For further information: https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/bicep-config-modules
+{
+  "experimentalFeaturesEnabled": {
+    "legacyFormatter": true,
+    "userDefinedFunctions": true
+  },
+  "moduleAliases": {
+    "br": {
+      "public": {
+        "registry": "mcr.microsoft.com",
+        "modulePath": "bicep"
+      }
+    }
+  },
+  "analyzers": {
+    "core": {
+      "rules": {
+        "use-recent-api-versions": {
+          "level": "warning"
+        },
+        "use-recent-module-versions": {
+          "level": "warning"
+        },
+        "no-unused-params": {
+          "level": "warning"
+        },
+        "no-unused-vars": {
+          "level": "warning"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+// Bicep configuration for generated project repositories.
+// Module aliases enable short module references instead of full registry URIs.
+// For further information: https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/bicep-config-modules
+{
+  "experimentalFeaturesEnabled": {
+    "legacyFormatter": true
+  },
+  "moduleAliases": {
+    "br": {
+      "public": {
+        "registry": "mcr.microsoft.com",
+        "modulePath": "bicep"
+      },
+      "helpers": {
+        "registry": "_-_acrLoginServer_-_",
+        "modulePath": "bicep/helpers"
+      }
+    }
+  },
+  "analyzers": {
+    "core": {
+      "rules": {
+        "no-deployments-resources": {
+          "level": "off"
+        },
+        "no-unused-params": {
+          "level": "warning"
+        },
+        "no-unused-vars": {
+          "level": "warning"
+        }
+      }
+    }
+  }
+}

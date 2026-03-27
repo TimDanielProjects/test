@@ -1,0 +1,113 @@
+parameters:
+  # Base parameters
+  - name: environment # Name of the environment. Needs to match the name in DevOps under Pipelines -> Environments
+    type: string
+  - name: resourceId
+    type: string
+  - name: stageDependsOn # If the release stage depends on an earlier stage.
+    type: string
+
+stages:
+  - stage: setup_${{ parameters.environment }}
+    dependsOn: ${{ parameters.stageDependsOn }}
+    displayName: Setup for ${{ parameters.environment }}
+    jobs:
+      - deployment: setup_${{ parameters.environment }}
+        environment: ${{ parameters.environment }}
+        variables:
+          - template: /EnvironmentVariables/${{ parameters.environment }}.yml@deployment-modules
+          - name: resourceGroupName
+            value: "${{ lower(variables.organisationSuffix) }}-int-${{ parameters.resourceId }}-rg-${{ variables.regionSuffix }}-${{ variables.environmentSuffix }}"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: /Release/DownloadArtifactAndCheckoutRepos.yml@deployment-modules
+
+                # Check for resource group, create if not exists
+                - task: AzureCLI@2
+                  displayName: CLI - check for/create resource group
+                  inputs:
+                    azureSubscription: ${{ variables.serviceConnection }}
+                    scriptType: "bash"
+                    scriptLocation: "scriptPath"
+                    scriptPath: "deployment-modules/Scripts/CheckForResourceGroup.sh"
+                    arguments: $(resourceGroupName) ${{ variables.CLIResourceLocation }}
+
+                - template: /Release/BicepTemplate.yml@deployment-modules
+                  parameters:
+                    bicepTemplateFile: Setup.bicep
+                    resourceType: Setup Bicep
+                    overrideParameters: >-
+                      -environmentSuffix "${{ variables.environmentSuffix }}"
+                      -regionSuffix "${{ variables.regionSuffix }}"
+                      -organisationSuffix "${{ lower(variables.organisationSuffix) }}"
+                      -integrationId "${{ parameters.resourceId }}"
+                    parseOutputs: true
+                    resourceGroupName: $(resourceGroupName)
+                    resourceLocation: ${{ variables.defaultResourceLocation }}
+                    serviceConnection: ${{ variables.serviceConnection }}
+
+                # Check for storage account, create if not exists
+                - task: AzureCLI@2
+                  displayName: CLI - checkfor/create storage account
+                  inputs:
+                    azureSubscription: ${{ variables.serviceConnection }}
+                    scriptType: "bash"
+                    scriptLocation: "scriptPath"
+                    scriptPath: "deployment-modules/Scripts/CheckForStorageAccount.sh"
+                    arguments: $(resourceGroupName) $(storageAccountName) ${{ variables.CLIResourceLocation }}
+
+                # Set RBAC role for storage account blob access
+                - task: AzureCLI@2
+                  displayName: CLI - Set RBAC role for storage account blob access
+                  inputs:
+                    azureSubscription: ${{ variables.serviceConnection }}
+                    scriptType: "ps"
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az role assignment create --assignee "${{ variables.appRegistrationApplicationId }}" --role "Storage Blob Data Contributor" --scope "/subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroupName)/providers/Microsoft.Storage/storageAccounts/$(storageAccountName)"
+
+                # Check for KeyVault, create if not exists
+                - task: AzureCLI@2
+                  displayName: CLI - checkfor/create KeyVault
+                  inputs:
+                    azureSubscription: ${{ variables.serviceConnection }}
+                    scriptType: "bash"
+                    scriptLocation: "scriptPath"
+                    scriptPath: "deployment-modules/Scripts/CheckForKeyVault.sh"
+                    arguments: $(resourceGroupName) $(keyVaultName) ${{ variables.CLIResourceLocation }}
+
+  - stage: ${{ parameters.environment }}
+    dependsOn: setup_${{ parameters.environment }}
+    displayName: Release to ${{ parameters.environment }}
+    jobs:
+      - deployment: Deploy
+        environment: ${{ parameters.environment }}
+        variables:
+          - template: /EnvironmentVariables/${{ parameters.environment }}.yml@deployment-modules
+          - name: resourceGroupName
+            value: "${{ parameters.organisationSuffix }}-int-${{ parameters.resourceId }}-rg-${{ variables.regionSuffix }}-${{ variables.environmentSuffix }}"
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                  
+                - template: /Release/DownloadArtifactAndCheckoutRepos.yml@deployment-modules
+                # Deploy the resources
+                - template: /Release/BicepTemplate.yml@deployment-modules
+                  parameters:
+                    bicepTemplateFile: Main.bicep
+                    resourceType: Main Bicep
+                    overrideParameters: >-
+                      -regionSuffix "${{ variables.regionSuffix }}"
+                      -environmentSuffix "${{ variables.environmentSuffix }}"
+                      -integrationId "${{ parameters.resourceId }}"
+                      -organisationSuffix "${{ parameters.organisationSuffix }}"
+                      -nodiniteLoggingEnabled ${{ variables.nodiniteLoggingEnabled }}
+                      -applicationInsightsLoggingEnabled ${{ variables.applicationInsightsLoggingEnabled }}
+                    parseOutputs: false
+                    resourceGroupName: $(resourceGroupName)
+                    resourceLocation: ${{ variables.defaultResourceLocation }}
+                    serviceConnection: ${{ variables.serviceConnection }}

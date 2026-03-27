@@ -1,0 +1,18 @@
+stages:
+  - stage: Build
+    displayName: Build Artifacts
+    jobs:
+      - job: Build
+        steps:
+          # Checkout all necessary repositories needed for the build
+          - checkout: self # Checkout the current repository
+          - checkout: deployment-modules # Checkout the shared templates repository
+
+          # Copy the Bicep template files to the artifact
+          - template: /Build/CopyBicepTemplates.yml@deployment-modules
+
+          # Copy the Policy files to the artifact
+          - template: /Build/CopyPolicyFiles.yml@deployment-modules
+
+          # Create the artifact
+          - template: /Build/PublishArtifact.yml@deployment-modules

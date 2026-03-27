@@ -1,0 +1,30 @@
+name: 'Copy Script Files'
+description: 'Copies deployment scripts to the publish directory.'
+inputs:
+  integration_id:
+    description: 'Integration identifier'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.integration_id }}" ]; then
+          echo "Error: integration_id is required"
+          exit 1
+        fi
+    
+    - name: Copy script files to publish
+      shell: bash
+      run: |
+        echo "Copying scripts for integration: ${{ inputs.integration_id }}"
+        mkdir -p "publish/scripts"
+        
+        if [ -d "helper-modules/scripts" ]; then
+          cp -r "helper-modules/scripts"/* "publish/scripts/"
+          echo "✅ Successfully copied scripts from helper-modules/scripts/"
+        else
+          echo "⚠️ Warning: No script directory found (expected helper-modules/scripts/)"
+          mkdir -p "publish/scripts"
+        fi

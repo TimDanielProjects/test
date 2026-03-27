@@ -1,0 +1,19 @@
+{
+  "EnvironmentVariables": [
+    {
+      "SchemaName": "cr_EnvironmentUrl",
+      "Value": "https://your-org-prod.crm4.dynamics.com"
+    },
+    {
+      "SchemaName": "cr_KeyVaultUrl",
+      "Value": "https://your-kv-prod.vault.azure.net/"
+    }
+  ],
+  "ConnectionReferences": [
+    {
+      "LogicalName": "cr_sharedcommondataserviceforapps",
+      "ConnectionId": "",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+    }
+  ]
+}

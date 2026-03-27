@@ -1,0 +1,47 @@
+trigger: none # What will trigger the pipeline
+
+pool:
+  vmImage: windows-latest # Which image the agent should run
+
+resources:
+  repositories:
+    - repository: bicep-registry-modules
+      type: git
+      name: bicep-registry-modules
+    - repository: deployment-modules
+      type: git
+      name: deployment-modules
+
+variables:
+  integrationId: "shared"
+
+stages:
+  # Build - Creates the artifact to be used in the releases
+  - template: Build.yml
+
+  # Dynamically fetch environment names and loop through them for release
+  - stage: FetchEnvironments
+    displayName: Fetch Environments
+    jobs:
+      - job: Fetch
+        steps:
+          - checkout: deployment-modules # Checkout the deployment-modules repository
+          - task: Bash@3
+            name: FetchEnvironmentNames
+            inputs:
+              targetType: "inline"
+              script: |
+                # Fetch all .yml files in the EnvironmentVariables directory
+                env_files=$(ls $(System.DefaultWorkingDirectory)/deployment-modules/EnvironmentVariables/*.yml)
+                # Extract environment names by removing the directory path and .yml extension
+                env_names=$(basename -s .yml $env_files)
+                echo "##vso[task.setvariable variable=environmentNames]$env_names"
+            displayName: Fetch Environment Names
+
+  # Loop through each environment and deploy
+  - ${{ each environment in variables.environmentNames }}:
+      - template: Release.yml
+        parameters:
+          environment: ${{ environment }}
+          integrationId: ${{ lower(variables.integrationId) }} # to make sure the integrationId is lowercase
+          stageDependsOn: Build

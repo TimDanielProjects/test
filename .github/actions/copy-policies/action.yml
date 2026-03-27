@@ -1,0 +1,38 @@
+name: 'Copy Policy Files'
+description: 'Copies policy files (global and integration-specific) to the publish directory.'
+inputs:
+  integration_id:
+    description: 'Integration identifier'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Copy Policy Files
+      shell: bash
+      run: |
+        mkdir -p publish/Policies
+        if [ -d "Policies" ]; then
+          cp -r "Policies"/* "publish/Policies/"
+        fi
+        if [ -d "${{ inputs.integration_id }}/Deployment/Policies" ]; then
+          cp -r "${{ inputs.integration_id }}/Deployment/Policies"/* "publish/Policies/"
+        elif [ -d "${{ inputs.integration_id }}/deployment/Policies" ]; then
+          cp -r "${{ inputs.integration_id }}/deployment/Policies"/* "publish/Policies/"
+        else
+          echo "Warning: No policy files found for integration ${{ inputs.integration_id }}"
+        fi
+
+    - name: Copy helper-modules policy files
+      shell: bash
+      run: |
+        echo "Copying policy files from helper-modules/policies"
+        mkdir -p "publish/helper-modules/policies"
+        
+        if [ -d "helper-modules/policies" ]; then
+          cp -r "helper-modules/policies"/* "publish/helper-modules/policies/"
+          echo "✅ Successfully copied policy files from helper-modules/policies"
+        else
+          echo "⚠️ Warning: helper-modules/policies directory not found"
+          echo "Creating empty policies directory structure"
+          mkdir -p "publish/helper-modules/policies"
+        fi

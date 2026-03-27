@@ -1,0 +1,45 @@
+name: shared Workflow
+on:
+  workflow_dispatch:
+    inputs:
+      integrationId:
+        description: "Integration identifier"
+        required: true
+        default: "shared"
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-integration-env.yml
+    secrets: inherit
+    with:
+      integration_id: ${{ inputs.integrationId }}
+
+  deploy-dev:
+    needs: build
+    uses: ./.github/workflows/deploy-integration-env.yml
+    secrets: inherit
+    with:
+      integration_id: ${{ inputs.integrationId }}
+      environment: dev
+      bicep_file: ${{ inputs.integrationId }}/Deployment/Bicep/Main.bicep
+      functions_package: ${{ inputs.integrationId }}/Functions
+      logicapp_definition: ${{ inputs.integrationId }}/LogicAppWorkspace
+
+  summary:
+    needs: [build, deploy-dev]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "## Integration Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Integration ID:** ${{ inputs.integrationId }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Status:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deploy dev:** ${{ needs.deploy-dev.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
